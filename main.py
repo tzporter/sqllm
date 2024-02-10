@@ -133,9 +133,10 @@ Given the database schema, here is the SQL query that answers `{prompt}`. Do not
     cur.execute(sql_input)
     df = pd.read_sql_query(sql_input, conn)
     print('sending!')
+    output_matrix = [list(df.columns)] + df.values.tolist()
     # print(df)
     # output_matrix = [list(df.columns)]
     # for index, row in df.iterrows():
     #     output_matrix.append(list(row))
     conn.close()
-    return {"item_id": item_id, "answer": df.to_html()}
+    return {"item_id": item_id, "answer": output_matrix}
