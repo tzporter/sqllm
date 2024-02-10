@@ -39,6 +39,8 @@ def enter_continue():
     
     return False
 
+
+conn = create_connection('sql.db')
 while True:
     prompt = input("Database Query: ")
 
@@ -99,14 +101,19 @@ Given the database schema, here is the SQL query that answers `{prompt}`. Do not
             else:
                 continue
     else:
-         #Filter out commands that might modify the database
-         pass
+        #Filter out commands that might modify the database
+        for keyword in [
+            'ADD', 'ALTER', 'CREATE', 'REPLACE', 'DELETE', 
+            'DROP', 'EXEC', 'INSERT', 'TRUNCATE', 'UPDATE', 
+          ]:
+          if(keyword in sql_input.upper()):
+              print(f'Given command contains a editing word {keyword}. Please try again!')
+              continue
 
 
-    conn = create_connection('sql.db')
     df = pd.read_sql_query(sql_input, conn)
     print(df)
 
     if enter_continue():
         break
-         
+conn.close()
