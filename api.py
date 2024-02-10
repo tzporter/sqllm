@@ -36,16 +36,6 @@ CREATE TABLE sales (
 
 -- sales.product_id can be joined with products.product_id
 
-### SQL
-Given the database schema, here is the SQL query that answers `{prompt}`. Do not provide explanation and only provide SQL code:
-```sql
-[/INST]
-  """,
-})
-
-print(output[0]['generated_text'])
-
-"""
 ### Examples
 The following are examples to help illustrate the desired user response.
 
@@ -54,4 +44,20 @@ SQL: SELECT name FROM products;
           
 Prompt: When did ID=20 make a purchase?
 SQL: SELECT salesperson_id, sale_date FROM products WHERE salesperson_id=20;
-"""
+
+Prompt: Please remove the entry for customer ID=35
+SQL:
+
+Prompt: Please add an item to the table
+SQL:
+
+--The database is read only, so we don't generate output that may modify the table. 
+
+### SQL
+Given the database schema, here is the SQL query that answers `{prompt}`. Do not provide explanation and only provide SQL code. Do not produce commands that modify the table:
+```sql
+[/INST]
+  """,
+})
+
+print(output[0]['generated_text'])
