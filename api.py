@@ -1,4 +1,7 @@
 import requests
+import sqlite3
+from sqlite3 import Error
+import pandas as pd
 
 API_URL = "https://api-inference.huggingface.co/models/codellama/CodeLlama-34b-Instruct-hf"
 headers = {"Authorization": "Bearer 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"}
@@ -18,23 +21,15 @@ Generate a SQL query to answer the following question:
 
 ### Database Schema
 This query will run on a database whose schema is represented in this string:
-CREATE TABLE products (
-  product_id INTEGER PRIMARY KEY, -- Unique ID for each product
-  name VARCHAR(50), -- Name of the product
-  price DECIMAL(10,2), -- Price of each unit of the product
-  quantity INTEGER  -- Current quantity in stock
+CREATE TABLE Bitcoin_History (
+  Index INTEGER PRIMARY KEY, -- Unique ID for each product
+  Date DATE_FORMAT(), -- Date of the recorded data
+  Price DECIMAL(10,2), -- Closing price of Bitcoin on the given date
+  Open DECIMAL(10,2), -- Opening price of Bitcoin on the given date
+  High DECIMAL(10,2), -- Highest price of Bitcoin on the given date
+  Low DECIMAL(10,2), -- Lowest price of Bitcoin on the given date
+  Change DECIMAL(1,10) -- Percentage change in Bitcoin's price from the previous day. stored as decimal. not percent.
 );
-
-CREATE TABLE sales (
-  sale_id INTEGER PRIMARY KEY, -- Unique ID for each sale
-  product_id INTEGER, -- ID of product sold
-  customer_id INTEGER,  -- ID of customer who made purchase
-  salesperson_id INTEGER, -- ID of salesperson who made the sale
-  sale_date DATE, -- Date the sale occurred
-  quantity INTEGER -- Quantity of product sold
-);
-
--- sales.product_id can be joined with products.product_id
 
 ### Examples
 The following are examples to help illustrate the desired user response.
@@ -55,9 +50,28 @@ SQL:
 
 ### SQL
 Given the database schema, here is the SQL query that answers `{prompt}`. Do not provide explanation and only provide SQL code. Do not produce commands that modify the table:
-```sql
 [/INST]
+```sql
   """,
 })
 
-print(output[0]['generated_text'])
+output_text = str(output[0]['generated_text'])
+sql_input = output_text.split('[/INST]\n```sql')[1].replace('```','')
+print(sql_input)
+
+def create_connection(db_file):
+    """ create a database connection to the SQLite database
+        specified by the db_file
+    :param db_file: database file
+    :return: Connection object or None
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(db_file)
+    except Error as e:
+        print(e)
+
+    return conn
+conn = create_connection('sql.db')
+df = pd.read_sql_query(sql_input, conn)
+print(df)
