@@ -8,6 +8,7 @@ from sqlite3 import Error
 import pandas as pd
 from dotenv import load_dotenv
 import os
+import json
 
 DEVMODE = False
 DEBUG = True
@@ -107,12 +108,9 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    conn = create_connection(DB_NAME)
-
-    if DEBUG: print(q)
-    prompt = q
+@app.get("/query/{item_id}")
+def get_sql_command(item_id: int, prompt: Union[str, None] = None):
+    if DEBUG: print(prompt)
 
     output = query({
     	"inputs": get_instruction(TABLE_NAME, DB_NAME, METADATA, prompt),
@@ -121,28 +119,37 @@ def read_item(item_id: int, q: Union[str, None] = None):
     output_text = str(output[0]['generated_text'])
     sql_input = output_text.split('[/INST]\n```sql')[1].replace('```','')
 
-    if DEVMODE:
-        print(sql_input)
-        # q = input("Does this query look correct? (y/N) ").upper()
-    else:
-        #Filter out commands that might modify the database
-        for keyword in banned_words:
-            if(keyword in sql_input.upper()):
-                print(f'Given command contains a editing word {keyword}. Please try again!')
-                return { 
-                    "item_id": item_id,
-                    "error": f'Given command contains a editing word {keyword}. Please try again!',
-                }
+    return sql_input
 
+@app.get("/runsql/{item_id}")
+def run_sql_command(item_id: int, sql: Union[str, None] = None):
+    conn = create_connection(DB_NAME)
 
-    cur = conn.cursor()
-    cur.execute(sql_input)
-    df = pd.read_sql_query(sql_input, conn)
+    #cur = conn.cursor()
+    
+    #cur.execute(sql)
+    df = pd.read_sql_query(sql, conn)
     print('sending!')
     output_matrix = [list(df.columns)] + df.values.tolist()
-    # print(df)
-    # output_matrix = [list(df.columns)]
-    # for index, row in df.iterrows():
-    #     output_matrix.append(list(row))
     conn.close()
     return {"item_id": item_id, "answer": output_matrix}
+
+
+
+
+    #Extract to Javascript
+    #if DEVMODE:
+    #    print(sql_input)
+    #    # q = input("Does this query look correct? (y/N) ").upper()
+    #else:
+    #    #Filter out commands that might modify the database
+    #    for keyword in banned_words:
+    #        if(keyword in sql_input.upper()):
+    #            print(f'Given command contains a editing word {keyword}. Please try again!')
+    #            return { 
+    #                "item_id": item_id,
+    #                "error": f'Given command contains a editing word {keyword}. Please try again!',
+    #            }
+
+
+    
