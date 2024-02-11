@@ -205,12 +205,11 @@ def get_sql_command(prompt: Union[str, None] = None):
 def run_sql_command(sql: Union[str, None] = None) -> pd.DataFrame:
     conn = create_connection(DB_NAME)
 
-    # try: 
-    df = pd.read_sql_query(sql, conn)
-    # output_matrix = [list(df.columns)] + df.values.tolist()
-    # except:
-    #     print(sql)
-    #     output_matrix = "ERROR in main.py. check python console/"
+    try: 
+        df = pd.read_sql_query(sql, conn)
+    except:
+        ui.notify('SQL isn\'t runnable. please try again!')
+        df = pd.DataFrame()
     return df#{"item_id": item_id, "answer": output_matrix}
 
 
