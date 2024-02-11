@@ -1,4 +1,4 @@
 fastapi
 pandas
 python-dotenv
-uvicorn[standard]
+nicegui

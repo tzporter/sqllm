@@ -1,15 +1,62 @@
 from typing import Union
 
-from fastapi import FastAPI
+# from fastapi import FastAPI
+from nicegui import ui
+from nicegui.events import KeyEventArguments
+# import frontend
 
 import requests
 import sqlite3
 from sqlite3 import Error
 import pandas as pd
+from pandas.api.types import is_bool_dtype, is_numeric_dtype
 from dotenv import load_dotenv
 import os
 import json
 
+ui.label('Hello NiceGUI!')
+
+# app = FastAPI()
+# frontend.init(app)
+
+
+# @app.get("/")
+# def read_root():
+#     return {"Hello": "World"}
+
+# if __name__ == '__main__':
+#     print('Please start the app with the "uvicorn" command as shown in the start.sh script')
+
+user_input = ui.input(value='', placeholder='enter prompt')
+ouput = ui.label('hello')
+
+def update(*, df: pd.DataFrame, r: int, c: int, value):
+    df.iat[r, c] = value
+    ui.notify(f'Set ({r}, {c}) to {value}')
+grid = ui.grid(rows=10, columns=10)
+
+def handle_key(e: KeyEventArguments):
+    print(e.key)
+    if e.key == 'Enter':
+        if e.action.keydown:
+            # (user_input.value)
+            sql_command = get_sql_command(user_input.value)
+            result_df = run_sql_command(sql_command)
+            # result_df = 5
+            with ui.grid(rows=len(result_df.index)+1).classes('grid-flow-col'):
+                for c, col in enumerate(result_df.columns):
+                    ui.label(col).classes('font-bold')
+                    for r, row in enumerate(result_df.loc[:, col]):
+                        if is_bool_dtype(result_df[col].dtype):
+                            cls = ui.checkbox
+                        elif is_numeric_dtype(result_df[col].dtype):
+                            cls = ui.number
+                        else:
+                            cls = ui.input
+                        cls(value=row, on_change=lambda event, r=r, c=c: update(df=result_df, r=r, c=c, value=event.value))
+            # ouput.set_text(result_df.to_string())
+keyboard = ui.keyboard(on_key=handle_key)
+ui.run()
 DEVMODE = False
 DEBUG = True
 
@@ -100,16 +147,11 @@ Given the database schema, here is the SQL query that answers `{prompt}`. Do not
 """
 
 
-app = FastAPI()
 
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
 
 #MAY NEED TO REMOVE NEWLINES AND CHANGE SPACES TO %20 FOR API CALL!
-@app.get("/query/{item_id}")
-def get_sql_command(item_id: int, prompt: Union[str, None] = None):
+# @app.get("/query/{item_id}")
+def get_sql_command(prompt: Union[str, None] = None):
     if DEBUG: print(prompt)
 
     output = query({
@@ -121,17 +163,17 @@ def get_sql_command(item_id: int, prompt: Union[str, None] = None):
 
     return sql_input
 
-@app.get("/runsql/{item_id}")
-def run_sql_command(item_id: int, sql: Union[str, None] = None):
+# @app.get("/runsql/{item_id}")
+def run_sql_command(sql: Union[str, None] = None) -> pd.DataFrame:
     conn = create_connection(DB_NAME)
 
-    try: 
-        df = pd.read_sql_query(sql, conn)
-        output_matrix = [list(df.columns)] + df.values.tolist()
-    except:
-        print(sql)
-        output_matrix = "ERROR in main.py. check python console/"
-    return {"item_id": item_id, "answer": output_matrix}
+    # try: 
+    df = pd.read_sql_query(sql, conn)
+    # output_matrix = [list(df.columns)] + df.values.tolist()
+    # except:
+    #     print(sql)
+    #     output_matrix = "ERROR in main.py. check python console/"
+    return df#{"item_id": item_id, "answer": output_matrix}
 
 
 
