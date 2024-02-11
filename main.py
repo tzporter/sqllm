@@ -3,9 +3,6 @@ from typing import Union
 # from fastapi import FastAPI
 from nicegui import ui
 from nicegui.events import KeyEventArguments
-# import frontend
-
-from nicegui import ui
 import requests
 import sqlite3
 from sqlite3 import Error
@@ -15,21 +12,45 @@ from dotenv import load_dotenv
 import os
 import json
 
-ui.label('Hello NiceGUI!')
+class Data:
+    def __init__(self):
+        self.dev_mode = False
+        self.generated_sql = ""
 
-# app = FastAPI()
-# frontend.init(app)
+data = Data()
+
+dark = ui.dark_mode()
+def toggle_dark():
+    if data.dev_mode:
+        dark.enable()
+    else:
+        dark.disable()
+
+ui.label('Welcome to SQLLM!')
+switch = ui.switch('', on_change=toggle_dark).bind_value(data, 'dev_mode')
+ui.label('Developer mode enabled!').bind_visibility(data, 'dev_mode')
+ui.markdown('').bind_content_from(data, 'generated_sql')
+
+def enter_callback():
+    result_df = process_query(user_input.value)
+
+    # result_df = 5
+    with ui.grid(rows=len(result_df.index)+1).classes('grid-flow-col'):
+        for c, col in enumerate(result_df.columns):
+            ui.label(col).classes('font-bold')
+            for r, row in enumerate(result_df.loc[:, col]):
+                if is_bool_dtype(result_df[col].dtype):
+                    cls = ui.checkbox
+                elif is_numeric_dtype(result_df[col].dtype):
+                    cls = ui.number
+                else:
+                    cls = ui.input
+                cls(value=row, on_change=lambda event, r=r, c=c: update(df=result_df, r=r, c=c, value=event.value))
+
+user_input = ui.input(value='', 
+                      placeholder='enter query').on('keydown.enter', enter_callback)
 
 
-# @app.get("/")
-# def read_root():
-#     return {"Hello": "World"}
-
-# if __name__ == '__main__':
-#     print('Please start the app with the "uvicorn" command as shown in the start.sh script')
-
-user_input = ui.input(value='', placeholder='enter prompt')
-ouput = ui.label('hello')
 
 def update(*, df: pd.DataFrame, r: int, c: int, value):
     df.iat[r, c] = value
@@ -41,8 +62,11 @@ def handle_key(e: KeyEventArguments):
     if e.key == 'Enter':
         if e.action.keydown:
             # (user_input.value)
-            sql_command = get_sql_command(user_input.value)
-            result_df = run_sql_command(sql_command)
+            #sql_command = get_sql_command(user_input.value)
+            #result_df = run_sql_command(sql_command)
+
+            result_df = process_query(user_input.value)
+
             # result_df = 5
             with ui.grid(rows=len(result_df.index)+1).classes('grid-flow-col'):
                 for c, col in enumerate(result_df.columns):
@@ -56,7 +80,8 @@ def handle_key(e: KeyEventArguments):
                             cls = ui.input
                         cls(value=row, on_change=lambda event, r=r, c=c: update(df=result_df, r=r, c=c, value=event.value))
             # ouput.set_text(result_df.to_string())
-keyboard = ui.keyboard(on_key=handle_key)
+
+#keyboard = ui.keyboard(on_key=handle_key)
 ui.run()
 DEVMODE = False
 DEBUG = True
@@ -79,24 +104,11 @@ banned_words = [
                 'MAKE'
             ]
 
-class Data:
-    def __init__(self):
-        self.dev_mode = False
-        self.generated_sql = ""
-
 load_dotenv()
 token = os.getenv("HF_TOKEN")
 API_URL = "https://api-inference.huggingface.co/models/codellama/CodeLlama-34b-Instruct-hf"
 headers = {"Authorization": f"Bearer {token}"}
 
-data = Data()
-switch = ui.switch('').bind_value(data, 'dev_mode')
-ui.label('Developer mode enabled!').bind_visibility_from(data, 'dev_mode')
-ui.textarea(label='Query', placeholder='Enter your query here', 
-            on_change=lambda e: print("YES") if e.value=="\n" else print("NO"))
-
-
-ui.label('').bind_text_from(data, 'generated_sql')
 
 
 ui.run()
@@ -163,19 +175,11 @@ Given the database schema, here is the SQL query that answers `{prompt}`. Do not
 ```sql
 """
 
-
-#app = FastAPI()
-
-
-#@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-def process_query():
-    sql = get_sql_command()
+def process_query(prompt):
+    sql = get_sql_command(prompt)
 
     if data.dev_mode:
-       data.generated_sql = sql
+       data.generated_sql = f"```sql\n{sql}\n```"
        print(sql)
        # q = input("Does this query look correct? (y/N) ").upper()
     else:
@@ -185,11 +189,10 @@ def process_query():
                 data.generated_sql = f'Given command contains a editing word {keyword}. Please try again!'
                 return
     
-    run_sql_command(sql)
+    return run_sql_command(sql)
     
 
 #MAY NEED TO REMOVE NEWLINES AND CHANGE SPACES TO %20 FOR API CALL!
-#@app.get("/query/{item_id}")
 def get_sql_command(prompt: Union[str, None] = None):
     if DEBUG: print(prompt)
 
@@ -202,7 +205,6 @@ def get_sql_command(prompt: Union[str, None] = None):
 
     return sql_input
 
-# @app.get("/runsql/{item_id}")
 def run_sql_command(sql: Union[str, None] = None) -> pd.DataFrame:
     conn = create_connection(DB_NAME)
 
@@ -213,12 +215,6 @@ def run_sql_command(sql: Union[str, None] = None) -> pd.DataFrame:
     #     print(sql)
     #     output_matrix = "ERROR in main.py. check python console/"
     return df#{"item_id": item_id, "answer": output_matrix}
-
-
-
-
-    #Extract to Javascript
-    
 
 
     
