@@ -107,7 +107,7 @@ app = FastAPI()
 def read_root():
     return {"Hello": "World"}
 
-
+#MAY NEED TO REMOVE NEWLINES AND CHANGE SPACES TO %20 FOR API CALL!
 @app.get("/query/{item_id}")
 def get_sql_command(item_id: int, prompt: Union[str, None] = None):
     if DEBUG: print(prompt)
@@ -125,13 +125,12 @@ def get_sql_command(item_id: int, prompt: Union[str, None] = None):
 def run_sql_command(item_id: int, sql: Union[str, None] = None):
     conn = create_connection(DB_NAME)
 
-    #cur = conn.cursor()
-    
-    #cur.execute(sql)
-    df = pd.read_sql_query(sql, conn)
-    print('sending!')
-    output_matrix = [list(df.columns)] + df.values.tolist()
-    conn.close()
+    try: 
+        df = pd.read_sql_query(sql, conn)
+        output_matrix = [list(df.columns)] + df.values.tolist()
+    except:
+        print(sql)
+        output_matrix = "ERROR in main.py. check python console/"
     return {"item_id": item_id, "answer": output_matrix}
 
 
