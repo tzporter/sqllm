@@ -214,7 +214,8 @@ def process_query(prompt):
        #Filter out commands that might modify the database
         for keyword in banned_words:
            if(keyword in sql.upper()):
-                data.generated_sql = f'Given command contains an editing word {keyword}. Please try again!'
+                #data.generated_sql = f'Given command contains an editing word {keyword}. Please try again!'
+                ui.notify('Generated SQL contained unsafe commands. Please Try Again!', type='warning')
                 return
     
         return run_sql_command(sql)
