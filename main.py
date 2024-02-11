@@ -107,7 +107,7 @@ app = FastAPI()
 def read_root():
     return {"Hello": "World"}
 
-
+#MAY NEED TO REMOVE NEWLINES AND CHANGE SPACES TO %20 FOR API CALL!
 @app.get("/query/{item_id}")
 def get_sql_command(item_id: int, prompt: Union[str, None] = None):
     if DEBUG: print(prompt)
