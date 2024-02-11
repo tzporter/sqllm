@@ -70,7 +70,9 @@ with ui.row().classes('items-center').classes('w-full justify-between'):
     switch = ui.switch('', 
                        on_change=toggle_dark).bind_value(data, 'dev_mode')
 
-user_input_textbox = ui.input(placeholder='enter query').on('keydown.enter', enter_callback).props("size=100")
+with ui.row().classes('items-center'):
+    label = ui.label('Query:')
+    user_input_textbox = ui.input(placeholder='Example: What is the highest price achieved').on('keydown.enter', enter_callback).props("size=100")
 dev_code_textbox = ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
 
 
@@ -176,7 +178,7 @@ def process_query(prompt):
     sql = get_sql_command(prompt)
 
     if data.dev_mode:
-       data.generated_sql = f"```sql\n{sql}\n```"
+       data.generated_sql = f"Generated SQL query:\n```sql\n{sql}\n```"
        print(sql)
        # q = input("Does this query look correct? (y/N) ").upper()
     else:
