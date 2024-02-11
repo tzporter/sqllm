@@ -44,13 +44,10 @@ def update_table(dataframe):
                     cls = ui.label
                 cls(row)
 
-cheese = ui.input()
-cheese.set_visibility(False)
 # defining enter behavior
 def enter_callback():
     result_df = process_query(user_input_textbox.value)
     print(result_df)
-    cheese.run_method('focus')
     # print(result_df)
     update_table(result_df)
 
@@ -70,10 +67,11 @@ with ui.row().classes('items-center').classes('w-full justify-between'):
     title = ui.label('Welcome to SQLLM!')
     switch = ui.switch('', 
                        on_change=toggle_dark).bind_value(data, 'dev_mode')
+with ui.card().style('width: 600px; margin: auto'):
 
-with ui.row().classes('items-center'):
-    label = ui.label('Query:')
-    user_input_textbox = ui.input(placeholder='Example: What is the highest price achieved').on('keydown.enter', enter_callback).props("size=100")
+    with ui.row().classes('items-center'):
+        label = ui.label('Query:')
+        user_input_textbox = ui.input(placeholder='Example: What is the highest price achieved').on('keydown.enter', enter_callback).style('width: 500px')
 dev_code_textbox = ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
 
 
