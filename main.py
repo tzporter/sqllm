@@ -257,12 +257,16 @@ def run_sql_command(sql: Union[str, None] = None) -> pd.DataFrame:
         if usepd:
             df = pd.read_sql_query(sql, conn)
         else:
-            conn.execute(sql)
+            cur = conn.cursor()
+            cur.execute(sql)
+            conn.commit()
             df = pd.DataFrame()
     except:
 
         ui.notify('SQL isn\'t runnable. please try again!', type='warning')
         df = pd.DataFrame()
+
+    conn.close()
     return df#{"item_id": item_id, "answer": output_matrix}
 
 
