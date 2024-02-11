@@ -248,8 +248,19 @@ def run_sql_command(sql: Union[str, None] = None) -> pd.DataFrame:
     conn = create_connection(DB_NAME)
 
     try: 
-        df = pd.read_sql_query(sql, conn)
+        usepd = True
+        for keyword in banned_words:
+           if(keyword in sql.upper()):
+               usepd = False
+               break
+           
+        if usepd:
+            df = pd.read_sql_query(sql, conn)
+        else:
+            conn.execute(sql)
+            df = pd.DataFrame()
     except:
+
         ui.notify('SQL isn\'t runnable. please try again!', type='warning')
         df = pd.DataFrame()
     return df#{"item_id": item_id, "answer": output_matrix}
