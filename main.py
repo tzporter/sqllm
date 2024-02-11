@@ -2,7 +2,7 @@ from typing import Union
 
 # from fastapi import FastAPI
 from nicegui import ui
-from nicegui.events import KeyEventArguments
+from nicegui.events import KeyEventArguments, ValueChangeEventArguments
 import requests
 import sqlite3
 from sqlite3 import Error
@@ -24,8 +24,10 @@ dark = ui.dark_mode()
 def toggle_dark():
     if data.dev_mode:
         dark.enable()
+        ui.notify('Developer Mode: Enabled')
     else:
         dark.disable()
+        ui.notify('Developer Mode Disabled')
 
 #table_updater
 def update(*, df: pd.DataFrame, r: int, c: int, value):
@@ -51,12 +53,12 @@ def enter_callback():
     # print(result_df)
     update_table(result_df)
 
+    #ui.notify(f'{name}: {event.value}')
     
 
 #initializing layout
 title = ui.label('Welcome to SQLLM!')
 switch = ui.switch('', on_change=toggle_dark).bind_value(data, 'dev_mode')
-dev_on_subtitle = ui.label('Developer mode enabled!').bind_visibility(data, 'dev_mode')
 dev_code_textbox = ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
 user_input_textbox = ui.input(placeholder='enter query').on('keydown.enter', enter_callback).props("size=100")
 
