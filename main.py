@@ -27,8 +27,9 @@ def toggle_dark():
         dark.disable()
 
 ui.label('Welcome to SQLLM!')
-switch = ui.switch('', on_change=toggle_dark).bind_value(data, 'dev_mode')
-ui.label('Developer mode enabled!').bind_visibility(data, 'dev_mode')
+with ui.row():
+    switch = ui.switch('', on_change=toggle_dark).bind_value(data, 'dev_mode')
+    ui.label('Developer mode enabled!').bind_visibility(data, 'dev_mode')
 ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
 
 def enter_callback():
