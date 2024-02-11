@@ -57,14 +57,21 @@ def enter_callback():
     
 
 #initializing layout
+default_style = '''
+  font-family: Roboto Mono, monospace;
+'''
+
+ui.label.default_style(default_style)
+ui.input.default_style(default_style)
+
 with ui.row().classes('items-center').classes('w-full justify-between'):
     dummy = ui.label('')
     title = ui.label('Welcome to SQLLM!')
     switch = ui.switch('', 
                        on_change=toggle_dark).bind_value(data, 'dev_mode')
-dev_code_textbox = ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
-user_input_textbox = ui.input(placeholder='enter query').on('keydown.enter', enter_callback).props("size=100")
 
+user_input_textbox = ui.input(placeholder='enter query').on('keydown.enter', enter_callback).props("size=100")
+dev_code_textbox = ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
 
 
 
