@@ -20,6 +20,10 @@ class Data:
         self.clean_sql = ""
         #self.accept_code = False
         self.show_accept_buttons=False
+
+    def clear_sql(self):
+        self.generated_sql = ""
+        self.clean_sql = ""
 data = Data()
 
 # defining dark mode
@@ -31,11 +35,9 @@ def toggle_dark():
     else:
         dark.disable()
         ui.notify('Developer Mode Disabled')
-        data.clean_sql = ""
-        data.generated_sql = ""
+        data.clear_sql()
 
         data.show_accept_buttons = False
-
 
 
 # table constructor
@@ -76,8 +78,7 @@ def approve_code_callback(accept_bool):
         #data.accept_code = False
         data.show_accept_buttons = False    
     else:
-        data.clean_sql = ""
-        data.generated_sql = ""
+        data.clear_sql()
     
         data.show_accept_buttons = False
 
@@ -97,19 +98,17 @@ with ui.row().classes('items-center').classes('w-full justify-between'):
                        on_change=toggle_dark).bind_value(data, 'dev_mode')
 with ui.card().props("size=100").style('margin: auto'):
 
-    with ui.row().classes('items-center'):
-        label = ui.label('Query:')
-        user_input_textbox = ui.input(placeholder='Example: What is the highest price achieved').on('keydown.enter', enter_callback).props("size=60")
-
     with ui.column():
+        with ui.row().classes('items-center'):
+            label = ui.label('Query:')
+            user_input_textbox = ui.input(placeholder='Example: What is the highest price achieved').on('keydown.enter', enter_callback).props("size=60")
+
         dev_code_textbox = ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
         with ui.row():
             ui.button('Approve', on_click=lambda: approve_code_callback(True), ).bind_visibility(data, 'show_accept_buttons')
             ui.button('Reject', on_click=lambda: approve_code_callback(False), ).bind_visibility(data, 'show_accept_buttons')
 
-
-
-table_manager.grid = ui.grid(rows=2, columns=2)
+        table_manager.grid = ui.grid(rows=2, columns=2)
 
 #keyboard = ui.keyboard(on_key=handle_key)
 ui.run()
