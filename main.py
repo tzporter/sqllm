@@ -17,6 +17,9 @@ class Data:
     def __init__(self):
         self.dev_mode = False
         self.generated_sql = ""
+        self.clean_sql = ""
+        #self.accept_code = False
+        self.show_accept_buttons=False
 data = Data()
 
 # defining dark mode
@@ -28,6 +31,10 @@ def toggle_dark():
     else:
         dark.disable()
         ui.notify('Developer Mode Disabled')
+        data.clean_sql = ""
+        data.generated_sql = ""
+
+        data.show_accept_buttons = False
 
 #table_updater
 def update(*, df: pd.DataFrame, r: int, c: int, value):
@@ -50,11 +57,25 @@ def update_table(dataframe):
 # defining enter behavior
 def enter_callback():
     result_df = process_query(user_input_textbox.value)
+    if result_df is None:
+        return
     # print(result_df)
     update_table(result_df)
 
     #ui.notify(f'{name}: {event.value}')
+
+def approve_code_callback(accept_bool):
+    if accept_bool:
+        print(data.clean_sql)
+        update_table(run_sql_command(data.clean_sql))
+
+        #data.accept_code = False
+        data.show_accept_buttons = False    
+    else:
+        data.clean_sql = ""
+        data.generated_sql = ""
     
+        data.show_accept_buttons = False
 
 #initializing layout
 default_style = '''
@@ -73,7 +94,12 @@ with ui.row().classes('items-center').classes('w-full justify-between'):
 with ui.row().classes('items-center'):
     label = ui.label('Query:')
     user_input_textbox = ui.input(placeholder='Example: What is the highest price achieved').on('keydown.enter', enter_callback).props("size=100")
-dev_code_textbox = ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
+
+with ui.column():
+    dev_code_textbox = ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
+    with ui.row():
+        ui.button('Approve', on_click=lambda: approve_code_callback(True), ).bind_visibility(data, 'show_accept_buttons')
+        ui.button('Reject', on_click=lambda: approve_code_callback(False), ).bind_visibility(data, 'show_accept_buttons')
 
 
 
@@ -178,17 +204,21 @@ def process_query(prompt):
     sql = get_sql_command(prompt)
 
     if data.dev_mode:
+       data.clean_sql = sql
        data.generated_sql = f"Generated SQL query:\n```sql\n{sql}\n```"
-       print(sql)
+       data.show_accept_buttons=True
+
+       return None
+       #print(sql)
        # q = input("Does this query look correct? (y/N) ").upper()
     else:
        #Filter out commands that might modify the database
         for keyword in banned_words:
            if(keyword in sql.upper()):
-                data.generated_sql = f'Given command contains a editing word {keyword}. Please try again!'
+                data.generated_sql = f'Given command contains an editing word {keyword}. Please try again!'
                 return
     
-    return run_sql_command(sql)
+        return run_sql_command(sql)
     
 
 #MAY NEED TO REMOVE NEWLINES AND CHANGE SPACES TO %20 FOR API CALL!
@@ -210,8 +240,8 @@ def run_sql_command(sql: Union[str, None] = None) -> pd.DataFrame:
     try: 
         df = pd.read_sql_query(sql, conn)
     except:
-        ui.notify('SQL isn\'t runnable. please try again!')
-        df = pd.DataFrame()
+       ui.notify('SQL isn\'t runnable. please try again!')
+       df = pd.DataFrame()
     return df#{"item_id": item_id, "answer": output_matrix}
 
 
