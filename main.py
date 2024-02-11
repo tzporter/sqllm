@@ -59,8 +59,6 @@ class table_manager:
                     else:
                         cls = ui.label
                     cls(row)
-                for num in range(10-len(dataframe.columns)):
-                    ui.label('*')
 
 
 # defining enter behavior
@@ -110,7 +108,7 @@ with ui.card().props("size=100").style('margin: auto'):
         with ui.row():
             ui.button('Approve', on_click=lambda: approve_code_callback(True), ).bind_visibility(data, 'show_accept_buttons')
             ui.button('Reject', on_click=lambda: approve_code_callback(False), ).bind_visibility(data, 'show_accept_buttons')
-
+empty_textbox = ui
 
 table_manager.grid = ui.grid(columns=2)
 
