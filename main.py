@@ -81,6 +81,7 @@ default_style = '''
 
 ui.label.default_style(default_style)
 ui.input.default_style(default_style)
+ui.button.default_style(default_style)
 
 with ui.row().classes('items-center').classes('w-full justify-between'):
     dummy = ui.label('')
