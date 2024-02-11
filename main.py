@@ -29,7 +29,7 @@ def toggle_dark():
 ui.label('Welcome to SQLLM!')
 switch = ui.switch('', on_change=toggle_dark).bind_value(data, 'dev_mode')
 ui.label('Developer mode enabled!').bind_visibility(data, 'dev_mode')
-ui.markdown('').bind_content_from(data, 'generated_sql')
+ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
 
 def enter_callback():
     result_df = process_query(user_input.value)
@@ -56,30 +56,6 @@ def update(*, df: pd.DataFrame, r: int, c: int, value):
     df.iat[r, c] = value
     ui.notify(f'Set ({r}, {c}) to {value}')
 grid = ui.grid(rows=10, columns=10)
-
-def handle_key(e: KeyEventArguments):
-    print(e.key)
-    if e.key == 'Enter':
-        if e.action.keydown:
-            # (user_input.value)
-            #sql_command = get_sql_command(user_input.value)
-            #result_df = run_sql_command(sql_command)
-
-            result_df = process_query(user_input.value)
-
-            # result_df = 5
-            with ui.grid(rows=len(result_df.index)+1).classes('grid-flow-col'):
-                for c, col in enumerate(result_df.columns):
-                    ui.label(col).classes('font-bold')
-                    for r, row in enumerate(result_df.loc[:, col]):
-                        if is_bool_dtype(result_df[col].dtype):
-                            cls = ui.checkbox
-                        elif is_numeric_dtype(result_df[col].dtype):
-                            cls = ui.number
-                        else:
-                            cls = ui.input
-                        cls(value=row, on_change=lambda event, r=r, c=c: update(df=result_df, r=r, c=c, value=event.value))
-            # ouput.set_text(result_df.to_string())
 
 #keyboard = ui.keyboard(on_key=handle_key)
 ui.run()
