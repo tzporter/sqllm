@@ -47,7 +47,9 @@ def update_table(dataframe):
 
 # defining enter behavior
 def enter_callback():
-    result_df = process_query(user_input.value)
+    result_df = process_query(user_input_textbox.value)
+    # print(result_df)
+    update_table(result_df)
 
     
 
