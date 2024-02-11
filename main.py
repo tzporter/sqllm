@@ -35,6 +35,7 @@ def toggle_dark():
         data.generated_sql = ""
 
         data.show_accept_buttons = False
+    table_manager.grid.clear()
 
 
 
@@ -44,7 +45,7 @@ class table_manager:
     def update_table(dataframe):
         table_manager.grid.delete()
         print(dataframe.columns)
-        table_manager.grid =  ui.grid(rows=len(dataframe.index)+1)
+        table_manager.grid = ui.grid(rows=len(dataframe.index)+1)
         with table_manager.grid.classes('grid-flow-col'):
             for c, col in enumerate(dataframe.columns):
                 ui.label(col).classes('font-bold')
@@ -56,6 +57,8 @@ class table_manager:
                     else:
                         cls = ui.label
                     cls(row)
+                for num in range(10-len(dataframe.columns)):
+                    ui.label('*')
 
 
 # defining enter behavior
@@ -108,8 +111,7 @@ with ui.card().props("size=100").style('margin: auto'):
             ui.button('Reject', on_click=lambda: approve_code_callback(False), ).bind_visibility(data, 'show_accept_buttons')
 
 
-
-table_manager.grid = ui.grid(rows=2, columns=2)
+table_manager.grid = ui.grid(columns=2)
 
 #keyboard = ui.keyboard(on_key=handle_key)
 ui.run()
@@ -213,6 +215,7 @@ def process_query(prompt):
        data.clean_sql = sql
        data.generated_sql = f"Generated SQL query:\n```sql\n{sql}\n```"
        data.show_accept_buttons=True
+       table_manager.grid.clear()
 
        return None
        #print(sql)
