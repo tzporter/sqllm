@@ -2,6 +2,7 @@ from typing import Union
 
 from fastapi import FastAPI
 
+from nicegui import ui
 import requests
 import sqlite3
 from sqlite3 import Error
@@ -31,11 +32,27 @@ banned_words = [
                 'MAKE'
             ]
 
+class Data:
+    def __init__(self):
+        self.dev_mode = False
+        self.generated_sql = ""
 
 load_dotenv()
 token = os.getenv("HF_TOKEN")
 API_URL = "https://api-inference.huggingface.co/models/codellama/CodeLlama-34b-Instruct-hf"
 headers = {"Authorization": f"Bearer {token}"}
+
+data = Data()
+switch = ui.switch('').bind_value(data, 'dev_mode')
+ui.label('Developer mode enabled!').bind_visibility_from(data, 'dev_mode')
+ui.textarea(label='Query', placeholder='Enter your query here', 
+            on_change=lambda e: print("YES") if e.value=="\n" else print("NO"))
+
+
+ui.label('').bind_text_from(data, 'generated_sql')
+
+
+ui.run()
 
 def query(payload):
 	response = requests.post(API_URL, headers=headers, json=payload)
@@ -100,16 +117,33 @@ Given the database schema, here is the SQL query that answers `{prompt}`. Do not
 """
 
 
-app = FastAPI()
+#app = FastAPI()
 
 
-@app.get("/")
+#@app.get("/")
 def read_root():
     return {"Hello": "World"}
 
+def process_query():
+    sql = get_sql_command()
+
+    if data.dev_mode:
+       data.generated_sql = sql
+       print(sql)
+       # q = input("Does this query look correct? (y/N) ").upper()
+    else:
+       #Filter out commands that might modify the database
+        for keyword in banned_words:
+           if(keyword in sql.upper()):
+                data.generated_sql = f'Given command contains a editing word {keyword}. Please try again!'
+                return
+    
+    run_sql_command(sql)
+    
+
 #MAY NEED TO REMOVE NEWLINES AND CHANGE SPACES TO %20 FOR API CALL!
-@app.get("/query/{item_id}")
-def get_sql_command(item_id: int, prompt: Union[str, None] = None):
+#@app.get("/query/{item_id}")
+def get_sql_command(prompt: Union[str, None] = None):
     if DEBUG: print(prompt)
 
     output = query({
@@ -121,8 +155,8 @@ def get_sql_command(item_id: int, prompt: Union[str, None] = None):
 
     return sql_input
 
-@app.get("/runsql/{item_id}")
-def run_sql_command(item_id: int, sql: Union[str, None] = None):
+#@app.get("/runsql/{item_id}")
+def run_sql_command(sql: Union[str, None] = None):
     conn = create_connection(DB_NAME)
 
     try: 
@@ -131,24 +165,13 @@ def run_sql_command(item_id: int, sql: Union[str, None] = None):
     except:
         print(sql)
         output_matrix = "ERROR in main.py. check python console/"
-    return {"item_id": item_id, "answer": output_matrix}
+    return {"answer": output_matrix}
 
 
 
 
     #Extract to Javascript
-    #if DEVMODE:
-    #    print(sql_input)
-    #    # q = input("Does this query look correct? (y/N) ").upper()
-    #else:
-    #    #Filter out commands that might modify the database
-    #    for keyword in banned_words:
-    #        if(keyword in sql_input.upper()):
-    #            print(f'Given command contains a editing word {keyword}. Please try again!')
-    #            return { 
-    #                "item_id": item_id,
-    #                "error": f'Given command contains a editing word {keyword}. Please try again!',
-    #            }
+    
 
 
     
