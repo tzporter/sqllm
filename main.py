@@ -36,10 +36,7 @@ def toggle_dark():
 
         data.show_accept_buttons = False
 
-#table_updater
-def update(*, df: pd.DataFrame, r: int, c: int, value):
-    df.iat[r, c] = value
-    ui.notify(f'Set ({r}, {c}) to {value}')
+
 # table constructor
 def update_table(dataframe):
     with ui.grid(rows=len(dataframe.index)+1).classes('grid-flow-col'):
@@ -47,13 +44,15 @@ def update_table(dataframe):
             ui.label(col).classes('font-bold')
             for r, row in enumerate(dataframe.loc[:, col]):
                 if is_bool_dtype(dataframe[col].dtype):
-                    cls = ui.checkbox
+                    cls = ui.label
                 elif is_numeric_dtype(dataframe[col].dtype):
-                    cls = ui.number
+                    cls = ui.label
                 else:
-                    cls = ui.input
-                cls(value=row, on_change=lambda event, r=r, c=c: update(df=dataframe, r=r, c=c, value=event.value))
+                    cls = ui.label
+                cls(row)
 
+cheese = ui.input()
+cheese.set_visibility(False)
 # defining enter behavior
 def enter_callback():
     result_df = process_query(user_input_textbox.value)
@@ -240,8 +239,8 @@ def run_sql_command(sql: Union[str, None] = None) -> pd.DataFrame:
     try: 
         df = pd.read_sql_query(sql, conn)
     except:
-       ui.notify('SQL isn\'t runnable. please try again!')
-       df = pd.DataFrame()
+        ui.notify('SQL isn\'t runnable. please try again!', type='warning')
+        df = pd.DataFrame()
     return df#{"item_id": item_id, "answer": output_matrix}
 
 
