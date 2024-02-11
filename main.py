@@ -37,19 +37,26 @@ def toggle_dark():
         data.show_accept_buttons = False
 
 
+
 # table constructor
-def update_table(dataframe):
-    with ui.grid(rows=len(dataframe.index)+1).classes('grid-flow-col'):
-        for c, col in enumerate(dataframe.columns):
-            ui.label(col).classes('font-bold')
-            for r, row in enumerate(dataframe.loc[:, col]):
-                if is_bool_dtype(dataframe[col].dtype):
-                    cls = ui.label
-                elif is_numeric_dtype(dataframe[col].dtype):
-                    cls = ui.label
-                else:
-                    cls = ui.label
-                cls(row)
+class table_manager:
+    @staticmethod
+    def update_table(dataframe):
+        table_manager.grid.delete()
+        print(dataframe.columns)
+        table_manager.grid =  ui.grid(rows=len(dataframe.index)+1)
+        with table_manager.grid.classes('grid-flow-col'):
+            for c, col in enumerate(dataframe.columns):
+                ui.label(col).classes('font-bold')
+                for r, row in enumerate(dataframe.loc[:, col]):
+                    if is_bool_dtype(dataframe[col].dtype):
+                        cls = ui.label
+                    elif is_numeric_dtype(dataframe[col].dtype):
+                        cls = ui.label
+                    else:
+                        cls = ui.label
+                    cls(row)
+
 
 # defining enter behavior
 def enter_callback():
@@ -57,14 +64,14 @@ def enter_callback():
     if result_df is None:
         return
     # print(result_df)
-    update_table(result_df)
+    table_manager.update_table(result_df)
 
     #ui.notify(f'{name}: {event.value}')
 
 def approve_code_callback(accept_bool):
     if accept_bool:
         print(data.clean_sql)
-        update_table(run_sql_command(data.clean_sql))
+        table_manager.update_table(run_sql_command(data.clean_sql))
 
         #data.accept_code = False
         data.show_accept_buttons = False    
@@ -87,21 +94,21 @@ with ui.row().classes('items-center').classes('w-full justify-between'):
     title = ui.label('Welcome to SQLLM!')
     switch = ui.switch('', 
                        on_change=toggle_dark).bind_value(data, 'dev_mode')
-with ui.card().style('width: 600px; margin: auto'):
+with ui.card().props("size=100").style('margin: auto'):
 
     with ui.row().classes('items-center'):
         label = ui.label('Query:')
-        user_input_textbox = ui.input(placeholder='Example: What is the highest price achieved').on('keydown.enter', enter_callback).props("size=100")
+        user_input_textbox = ui.input(placeholder='Example: What is the highest price achieved').on('keydown.enter', enter_callback).props("size=60")
 
-with ui.column():
-    dev_code_textbox = ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
-    with ui.row():
-        ui.button('Approve', on_click=lambda: approve_code_callback(True), ).bind_visibility(data, 'show_accept_buttons')
-        ui.button('Reject', on_click=lambda: approve_code_callback(False), ).bind_visibility(data, 'show_accept_buttons')
+    with ui.column():
+        dev_code_textbox = ui.markdown('').bind_content_from(data, 'generated_sql').bind_visibility(data, 'dev_mode')
+        with ui.row():
+            ui.button('Approve', on_click=lambda: approve_code_callback(True), ).bind_visibility(data, 'show_accept_buttons')
+            ui.button('Reject', on_click=lambda: approve_code_callback(False), ).bind_visibility(data, 'show_accept_buttons')
 
 
 
-grid = ui.grid(rows=10, columns=10)
+table_manager.grid = ui.grid(rows=2, columns=2)
 
 #keyboard = ui.keyboard(on_key=handle_key)
 ui.run()
@@ -226,9 +233,11 @@ def get_sql_command(prompt: Union[str, None] = None):
     output = query({
     	"inputs": get_instruction(TABLE_NAME, DB_NAME, METADATA, prompt),
     })
-
-    output_text = str(output[0]['generated_text'])
-    sql_input = output_text.split('[/INST]\n```sql')[1].replace('```','')
+    try:
+        output_text = str(output[0]['generated_text'])
+        sql_input = output_text.split('[/INST]\n```sql')[1].replace('```','')
+    except:
+        raise Exception(output)
 
     return sql_input
 
