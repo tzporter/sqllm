@@ -108,8 +108,7 @@ with ui.card().props("size=100").style('margin: auto'):
         with ui.row():
             ui.button('Approve', on_click=lambda: approve_code_callback(True), ).bind_visibility(data, 'show_accept_buttons')
             ui.button('Reject', on_click=lambda: approve_code_callback(False), ).bind_visibility(data, 'show_accept_buttons')
-empty_textbox = ui
-
+# table_card = ui.card(open=)
 table_manager.grid = ui.grid(columns=2)
 
 #keyboard = ui.keyboard(on_key=handle_key)
