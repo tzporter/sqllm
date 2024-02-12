@@ -12,6 +12,10 @@ from dotenv import load_dotenv
 import os
 import json
 
+DB_NAME = "sql.db"
+TABLE_NAME = "Bitcoin_History"
+METADATA = "sqldb.json"
+
 # data object
 class Data:
     def __init__(self):
@@ -116,10 +120,6 @@ ui.run()
 
 DEVMODE = False
 DEBUG = True
-
-DB_NAME = "sql.db"
-TABLE_NAME = "Bitcoin_History"
-METADATA = "sqldb.json"
 
 banned_words = [
                 'ADD', 
