@@ -13,7 +13,7 @@ import os
 import json
 
 DB_NAME = "sql.db"
-TABLE_NAME = "Bitcoin_History"
+TABLE_NAME = "Players"
 METADATA = "sqldb.json"
 
 # data object
@@ -49,7 +49,7 @@ def toggle_dark():
 class table_manager:
     @staticmethod
     def update_table(dataframe):
-        table_manager.grid.delete()
+        table_manager.grid.clear()
         print(dataframe.columns)
         table_manager.grid = ui.grid(rows=len(dataframe.index)+1)
         with table_manager.grid.classes('grid-flow-col'):
@@ -113,6 +113,10 @@ with ui.card().props("size=100").style('margin: auto'):
             ui.button('Approve', on_click=lambda: approve_code_callback(True), ).bind_visibility(data, 'show_accept_buttons')
             ui.button('Reject', on_click=lambda: approve_code_callback(False), ).bind_visibility(data, 'show_accept_buttons')
 # table_card = ui.card(open=)
+# ui.separator()  # Add a visual separator
+
+# Create a container specifically for the table with clear spacing
+# with ui.card().classes('w-full mt-4'):
 table_manager.grid = ui.grid(columns=2)
 
 #keyboard = ui.keyboard(on_key=handle_key)
@@ -137,7 +141,7 @@ banned_words = [
 
 load_dotenv()
 token = os.getenv("HF_TOKEN")
-API_URL = "https://api-inference.huggingface.co/models/codellama/CodeLlama-34b-Instruct-hf"
+API_URL = "https://router.huggingface.co/hyperbolic/v1/chat/completions"
 headers = {"Authorization": f"Bearer {token}"}
 
 
@@ -181,10 +185,9 @@ def get_table_metadata(table_name, db_name, metadata_name):
 
 def get_instruction(TABLE_NAME, DB_NAME, METADATA, prompt):
     return f"""
-[INST] Write code to solve the following coding problem that obeys the constraints and passes the example test cases. Please wrap your code answer using ```:
+Write code to solve the user's coding problem that obeys the constraints and complies with the example test cases. Please wrap your code answer using ```:
 ### Task
-Generate a SQL query to answer the following question:
-`{prompt}`
+Generate a SQL query to answer the user's prompt. Do not output anything other than the SQL query. 
 
 ### Database Schema
 This query will run on a database whose schema is represented in this string:
@@ -194,16 +197,11 @@ Table Name: {TABLE_NAME}
 ### Examples
 The following are examples to help illustrate the desired user response.
 
-Prompt: What are the product names?
-SQL: SELECT name FROM products;
+user: What are the product names?
+assistant: SELECT name FROM products;
 
-Prompt: When did ID=20 make a purchase?
-SQL: SELECT salesperson_id, sale_date FROM products WHERE salesperson_id=20;
-
-### SQL
-Given the database schema, here is the SQL query that answers `{prompt}`. Do not provide explanation and only provide SQL code.:
-[/INST]
-```sql
+user: When did ID=20 make a purchase?
+assistant: SELECT salesperson_id, sale_date FROM products WHERE salesperson_id=20;
 """
 
 def process_query(prompt):
@@ -233,14 +231,23 @@ def process_query(prompt):
 def get_sql_command(prompt: Union[str, None] = None):
     if DEBUG: print(prompt)
 
-    output = query({
-    	"inputs": get_instruction(TABLE_NAME, DB_NAME, METADATA, prompt),
-    })
-    try:
-        output_text = str(output[0]['generated_text'])
-        sql_input = output_text.split('[/INST]\n```sql')[1].replace('```','')
-    except:
-        raise Exception(output)
+    input = {
+        "messages" : [
+            { "role" : "sytem", "content" : get_instruction(TABLE_NAME, DB_NAME, METADATA, prompt)},
+            { "role" : "user", "content" : prompt}
+        ],
+        "model": "Qwen/Qwen2.5-Coder-32B-Instruct"
+    }
+
+    output = query(input)
+    print(output)
+
+    # try:
+    output_text = output["choices"][0]["message"]["content"]
+    print(output_text)
+    sql_input = output_text.split('```sql\n')[1].replace('```','')
+    # except:
+        # raise Exception(output)
 
     return sql_input
 
